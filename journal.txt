@@ -1,0 +1,11 @@
+quentin.leclaire@etudiant.univ-lille1.fr
+marwane.elagli@etudiant.univ-lille1.fr
+clement.godet@etudiant.univ-lille1.fr
+
+14/03
+Travail fait :
+- Début du pseudo-code pour la détermination des voisins d'une cellule.
+- Début de fenetre graphique avec la librairie TKinter
+
+Pour la semaine prochaine :
+- Finir le pseudo-code et coder l'algorithme de determination de voisins.
