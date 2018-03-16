@@ -1,0 +1,46 @@
+orientation hexagones verticale
+coordonées d'une cellule de la forme (X,Y) (X = numéro de ligne, Y = numéro de colonne)
+
+
+------ si on fait du cas par cas
+
+cas général = cellule à 6 voisins
+voisins = [(X,Y+1),(X,Y-1),(X-1,Y),(X+1,Y)]
+si X pair :
+	[(X-1,Y+1)(X+1,Y+1)] -> voisins
+sinon :
+	[(X-1,Y-1)(X+1,Y-1)] -> voisins
+
+cas_p1 : coin-haut-gauche
+voisins : [(X,Y+1),(X+1,Y)]
+
+cas_p2 : coin bas-droite
+voisins : [(X,Y-1),(X-1,Y)]
+
+cas_p3 : coin haut-droite
+voisins : [(X+1,Y),(X,Y-1),(X+1,Y-1)]
+
+cas_p4 : coin bas_gauche
+voisins : [(X-1,Y),(X,Y+1),(X-1,Y+1)]
+
+cas_p5 : bord haut
+voisins : [(X,Y-1),(X,Y+1),(X+1,Y),(X+1,Y-1)]
+
+cas_p6 : bord bas
+voisins : [(X,Y-1),(X,Y+1),(X-1,Y),(X-1,Y+1)]
+
+------
+
+
+------ si on utilise des conditions
+
+bord non-bas (X<Xmax) : [(X+1,Y)]
+
+bord non-haut (X>Xmin) : [(X-1,Y)]
+
+bord non-droit (Y<Ymax) : [(X,Y+1)]
+
+bord non-gauche (Y>Ymin) : [(X,Y-1)]
+
+------
+
