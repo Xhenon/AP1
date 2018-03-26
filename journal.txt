@@ -9,3 +9,11 @@ Travail fait :
 
 Pour la semaine prochaine :
 - Finir le pseudo-code et coder l'algorithme de determination de voisins.
+
+21/03
+Travail fait:
+- Affichage des hexagones
+- Réalisation de l'algo de détermination des voisins
+
+A faire: 
+- Traduire les conditions de modifications des cases en Python
