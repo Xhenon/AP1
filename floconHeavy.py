@@ -1,6 +1,7 @@
 from tkinter import *
 from math import sqrt , ceil
 import random
+import algo_voisins_hexa
 
 ''' ----Création de la fenetre---- '''
 
@@ -16,56 +17,41 @@ can.pack(side=TOP)
 
 class Tableau:
     
-    
-    
-    def __init__(self, width , height):
+    def __init__(self, width , height , vaporDensity , vaporToIceProportion , alpha , beta , theta , mu, gamma , sigma):
+        self.vaporDensity = vaporDensity #densité de vapeur initiale
+        self.amount = height*width
+        self.vaporToIceProportion = vaporToIceProportion #quantité de vapeur qui se transforme en glace durant le gel
+        self.alpha = alpha # attachement 3 cristaux (eau)
+        self.beta = beta # attachement 2 cristaux
+        self.gamma = gamma # fonte de la glace
+        self.mu = mu #fonte de l'eau
+        self.theta = theta #attachement 3 cristaux (vapeur)
+        self.sigma = sigma #bruit
         self.width = width
         self.height = height
-        self.cases = []
+        self.ids = []
+        self.vaporMap = []
+        self.waterMap = []
+        self.iceMap = []
         for i in range(width):
-            colone = []
-            for j in range(height):
-                colone.append(Case(0 , 0 , 0, 0))
-            self.cases.append(colone)
-        self.neighbors = 
+            self.vaporMap.append([self.vaporDensity for i in range(height)])
+            self.waterMap.append([0.0 for i in range(height)])
+            self.iceMap.append([0.0 for i in range(height)])
+            self.ids.append([-1 for i in range(height)])
         
+        #On ajoute un bloc de glace au milieu de la grille
+        xMid , yMid = int(width/2) , int(height/2-1)
+        print(xMid, yMid)
+        self.vaporMap[xMid][yMid] = 0.0
+        self.iceMap[xMid][yMid] = 1.0
+        self.waterMap[xMid][yMid] = 0.0
         
-    def getNeighbors(self, case):
-        
-        
-        
-    def updateColors(self, canvas):
-        for i in self.cases:
-            for j in i:
-                w = j.getWaterProportion()
-                v = j.getVaporProportion()
-                
-                blue = '00'
-                red = '00'
-                
-                if(w!=0 or v!=0):
-                    blue= format(int(w*255) , 'x')
-                    if len(blue)==1:
-                        blue= '0'+blue
-                
-                    red= format(int(v*255) , 'x')
-                    if len(red)==1:
-                        red= '0'+red
-                    
-                    canvas.itemconfig(j.getId(), fill='#'+red+'00'+blue)
-                else:
-                     canvas.itemconfig(j.getId(), fill='#82f0ff')
-                
-               
+        self.neighbors = {}
+        for i in range(width): #self.cases
+            for j in range(height): #self.cases[i]
+                self.neighbors[(i , j)]=algo_voisins_hexa.voisins_grille_hexa([[0 for i in range(width)] for j in range(height)] , (j , i))  
     
-    def setCaseAt(self, x , y , case):
-        self.cases[x][y] = case
-        
-    def getCaseAt(self, x , y):
-        return self.cases[x][y]
     
-    def getCases(self):
-        return self.cases
     
     def createArray(self, radius , canvas):
         '''
@@ -82,47 +68,68 @@ class Tableau:
         ao = sqrt(radius*radius- ab*ab)
         espaceX = ao*2
         espaceY= radius+ab
+        vapeur = 1.0
         for j in range(self.height):
             for i in range(self.width):
-                x = random.uniform(0 , 1)
-                y= random.uniform(0 , 1)
                 if j%2==0: #si i est pair
-                    self.cases[i][j]=Case(x , 0.0 ,y , canvas.create_polygon([i*espaceX-ao, j*espaceY+ab , i*espaceX , j*espaceY+radius , i*espaceX+ao , j*espaceY+ab , i*espaceX+ao , j*espaceY-ab , i*espaceX , j*espaceY-radius , i*espaceX-ao ,j*espaceY-ab] , outline='red' ,  fill='grey' , width = 1))
+                    self.ids[i][j]=canvas.create_polygon([i*espaceX-ao, j*espaceY+ab , i*espaceX , j*espaceY+radius , i*espaceX+ao , j*espaceY+ab , i*espaceX+ao , j*espaceY-ab , i*espaceX , j*espaceY-radius , i*espaceX-ao ,j*espaceY-ab] , outline='black' ,  fill='grey' , width = 2)
             
                 else: # si i est impair
-                    self.cases[i][j]=Case(x , 0.0 , y , canvas.create_polygon([i*espaceX-2*ao, j*espaceY+ab , i*espaceX-ao , j*espaceY+radius , i*espaceX , j*espaceY+ab , i*espaceX , j*espaceY-ab , i*espaceX-ao , j*espaceY-radius , i*espaceX-2*ao ,j*espaceY-ab] , outline='red' ,  fill='grey' , width = 1))
-         
-        
-        
-class Case:
-    def __init__(self , water , solid , vapor , id):
-        self.water = water
-        self.solid = solid
-        self.vapor = vapor
-        self.id = id
-        
-    def getId(self):
-        return self.id
+                    self.ids[i][j]=canvas.create_polygon([i*espaceX, j*espaceY+ab , i*espaceX+ao , j*espaceY+radius , i*espaceX+2*ao , j*espaceY+ab , i*espaceX+2*ao , j*espaceY-ab , i*espaceX+ao , j*espaceY-radius , i*espaceX ,j*espaceY-ab] , outline='black' ,  fill='grey' , width = 2)  
     
-    def getWaterProportion(self):
-        return self.water
     
-    def getSolidProportion(self):
-        return self.solid
+    def updateColors(self, canvas):
+        for i in range(self.width):
+            for j in range(self.height):
+                w = self.waterMap[i][j]
+                v = self.vaporMap[i][j]
+                
+                blue = '00'
+                red = '00'
+                
+                if(w!=0 or v!=0):
+                    blue= format(int(w*255) , 'x')
+                    if len(blue)==1:
+                        blue= '0'+blue
+                
+                    red= format(int(v*255) , 'x')
+                    if len(red)==1:
+                        red= '0'+red
+                    
+                    canvas.itemconfig(self.ids[i][j], fill='#'+red+'00'+blue)
+                else:
+                     canvas.itemconfig(self.ids[i][j], fill='#82f0ff')
+                
+            
+    def diffusion(self):
+        l = [[-1.0 for i in range(self.height)] for j in range(self.width)]
+        for i in range(self.width):
+            for j in range(self.height):
+                #print(i ,j)
+                if i == 12 and j == 9:
+                    print(self.neighbors[(i , j)])
+                mean = self.vaporMap[i][j]
+                n = 1 # nombre d'éléments dans la moyenne
+                for k in self.neighbors[(i , j)]:
+                    n+=1
+                    mean+=self.vaporMap[k[0]][k[1]]
+                l[i][j]=mean/n
+        self.vaporMap = list(l)
+           
+    def getIds(self):
+        return self.ids
     
-    def getVaporProportion(self):
-        return self.vapor
+    def getVaporMap(self):
+        return self.vaporMap
     
-    def setWaterProportion(self, water):
-        self.water = water
+    def getWaterMap(self):
+        return self.waterMap
     
-    def setSolidProportion(self, solid):
-        self.solid = solid
-    
-    def setVaporProportion(self, vapor):
-        self.vapor = vapor
-    
-   
+    def getIceMap(self):
+        return self.iceMap
+
+
+
 def getHexagonesFromRadius(x , y , radius):
     '''
     Renvoie le nombre d'hexagones affichables pour une fenetre de dimension (x , y) pour des hexagones de rayon 'radius'
@@ -144,10 +151,11 @@ def getHexagonesFromRadius(x , y , radius):
     
 radius = 30
 dim = getHexagonesFromRadius(w, h , radius)
+print("Tableau de dimension : ", dim[0] , dim[1])
 
-
-table = Tableau(dim[0] , dim[1])
+table = Tableau(dim[0] , dim[1] , 0.8 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0)
 table.createArray(radius , can)
+table.diffusion()
 table.updateColors(can)
 run = True
 while run:
