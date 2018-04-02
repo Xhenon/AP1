@@ -3,18 +3,6 @@ from math import sqrt , ceil
 import random
 import algo_voisins_hexa
 
-''' ----Création de la fenetre---- '''
-
-fen = Tk()
-#fen.protocol("WM_DELETE_WINDOW", onClosing)
-w = 1200 ; h = 800
-can = Canvas(fen, width=1200, height=800, bg='ivory')
-
-img = PhotoImage(width=w,height=h)
-can.create_image((w//2, h//2), image=img, state="normal")
-can.pack(side=TOP)
-
-
 class Tableau:
     
     def __init__(self, width , height , vaporDensity , vaporToIceProportion , alpha , beta , theta , mu, gamma , sigma):
@@ -41,7 +29,6 @@ class Tableau:
         
         #On ajoute un bloc de glace au milieu de la grille
         xMid , yMid = int(width/2) , int(height/2-1)
-        print(xMid, yMid)
         self.vaporMap[xMid][yMid] = 0.0
         self.iceMap[xMid][yMid] = 1.0
         self.waterMap[xMid][yMid] = 0.0
@@ -105,9 +92,6 @@ class Tableau:
         l = [[-1.0 for i in range(self.height)] for j in range(self.width)]
         for i in range(self.width):
             for j in range(self.height):
-                #print(i ,j)
-                if i == 12 and j == 9:
-                    print(self.neighbors[(i , j)])
                 mean = self.vaporMap[i][j]
                 n = 1 # nombre d'éléments dans la moyenne
                 for k in self.neighbors[(i , j)]:
@@ -127,7 +111,17 @@ class Tableau:
     
     def getIceMap(self):
         return self.iceMap
+    
+    def next(self , canvas):
+        print("next")
+        self.updateColors(canvas)
 
+    def previous(self , canvas):
+        print("previous")
+        self.updateColors(canvas)
+        
+    def changeGridTo(self , state):
+        #affiche une autre grille à la place de celle actuelle
 
 
 def getHexagonesFromRadius(x , y , radius):
@@ -149,11 +143,35 @@ def getHexagonesFromRadius(x , y , radius):
     
     return(xCount, yCount)
     
+
+
+''' ----Création de la fenetre---- '''
+
+fen = Tk()
+#fen.protocol("WM_DELETE_WINDOW", onClosing)
+w = 1200 ; h = 800
+can = Canvas(fen, width=1200, height=800, bg='ivory')
+
+#img = PhotoImage(width=w,height=h)
+#can.create_image((w//2, h//2), image=img, state="normal")
+can.pack(side=TOP)
+
+
 radius = 30
 dim = getHexagonesFromRadius(w, h , radius)
 print("Tableau de dimension : ", dim[0] , dim[1])
 
 table = Tableau(dim[0] , dim[1] , 0.8 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0)
+
+suivant = Button(text = "Suivant" , command = lambda: table.next(can), anchor = W)
+suivant.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
+nextWindow = can.create_window(0, 0, anchor=NW, window=suivant)
+
+precedent = Button(text = "Precedent" , command = lambda: table.previous(can) , anchor = W)
+precedent.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
+prevWindow = can.create_window(0, 30, anchor=NW, window=precedent)
+
+
 table.createArray(radius , can)
 table.diffusion()
 table.updateColors(can)
