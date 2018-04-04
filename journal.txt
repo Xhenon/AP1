@@ -17,3 +17,21 @@ Travail fait:
 
 A faire: 
 - Traduire les conditions de modifications des cases en Python
+
+28/03
+Travail fait:
+- Implémentation de l'algo des voisins au programme principal
+- Début d'implémentation des paramètres de création du flocon
+
+A faire :
+- Réaliser les fonctions diffusion, gel, ect... et les implémenter au programme.
+
+04/04
+Travail fait:
+- Implementation partielle des algorithmes de diffusion, gel, fonte, attachement
+- Début d'implémentation de la fonction "étape par étape"
+
+A faire:
+- Débugguer les algorithmes gel fonte, attachement
+- commenter les fonctions
+- Finir d'implémenter la fonction étape par étape
