@@ -5,14 +5,14 @@ import algo_voisins_hexa
 import copy
 import cProfile
 import multiprocessing as mp
-import png
 import time
+import png
+import sys
 
 class Tableau:
     
-    def __init__(self, graphic , width , height , vaporDensity , kappa , alpha , beta , theta , mu, gamma , sigma):
+    def __init__(self , width , height , vaporDensity , kappa , alpha , beta , theta , mu, gamma , sigma):
         self.listeCristal = []
-        self.graphic = graphic
         self.frontiere = []
         self.vaporDensity = vaporDensity #densité de vapeur initiale
         self.amount = height*width
@@ -71,88 +71,57 @@ class Tableau:
         CU: x et y > 0
     
         '''
-        if self.graphic:
-            xOffset = 0
-            ab = radius/2
-            ao = sqrt(radius*radius- ab*ab)
-            espaceX = ao*2
-            espaceY= radius+ab
-            vapeur = 1.0
-            for j in range(self.height):
-                for i in range(self.width):
-                    if j%2==0: #si i est pair
-                        self.ids[i][j]=canvas.create_polygon([i*espaceX-ao, j*espaceY+ab , i*espaceX , j*espaceY+radius , i*espaceX+ao , j*espaceY+ab , i*espaceX+ao , j*espaceY-ab , i*espaceX , j*espaceY-radius , i*espaceX-ao ,j*espaceY-ab] , outline='black' ,  fill='grey' , width = 2)
-                
-                    else: # si i est impair
-                        self.ids[i][j]=canvas.create_polygon([i*espaceX, j*espaceY+ab , i*espaceX+ao , j*espaceY+radius , i*espaceX+2*ao , j*espaceY+ab , i*espaceX+2*ao , j*espaceY-ab , i*espaceX+ao , j*espaceY-radius , i*espaceX ,j*espaceY-ab] , outline='black' ,  fill='grey' , width = 2)  
-    
-    def updateColors(self, canvas):
-        if self.graphic:
-            changeIds = []
-            changeColors = []
+        xOffset = 0
+        ab = radius/2
+        ao = sqrt(radius*radius- ab*ab)
+        espaceX = ao*2
+        espaceY= radius+ab
+        vapeur = 1.0
+        for j in range(self.height):
             for i in range(self.width):
-                for j in range(self.height):
-                    v = self.vaporMap[i][j]
-                    ice = self.iceMap[i][j]
-                    w = self.waterMap[i][j]
-                    
-                    
-                    blue = '00'
-                    red = '00'
-                    green = '00'
-                    
-                    green= format(int(w*255) , 'x')
-                    if len(green)==1:
-                        green= '0'+green
-                    
-                    red= format(int(v*255) , 'x')
-                    if len(red)==1:
-                        red= '0'+red
-                            
-                    blue= format(int(ice*255) , 'x')
-                    if len(blue)==1:
-                        blue= '0'+blue
-                            
-                    if canvas.itemcget(self.ids[i][j] , 'fill') != '#'+red+green+blue:
-                        changeIds.append(self.ids[i][j])
-                        changeColors.append('#'+red+green+blue)
+                if j%2==0: #si i est pair
+                    self.ids[i][j]=canvas.create_polygon([i*espaceX-ao, j*espaceY+ab , i*espaceX , j*espaceY+radius , i*espaceX+ao , j*espaceY+ab , i*espaceX+ao , j*espaceY-ab , i*espaceX , j*espaceY-radius , i*espaceX-ao ,j*espaceY-ab] , outline='black' ,  fill='grey' , width = 2)
             
-            for i in range(len(changeIds)):
-                canvas.itemconfig(changeIds[i], fill=changeColors[i])
+                else: # si i est impair
+                    self.ids[i][j]=canvas.create_polygon([i*espaceX, j*espaceY+ab , i*espaceX+ao , j*espaceY+radius , i*espaceX+2*ao , j*espaceY+ab , i*espaceX+2*ao , j*espaceY-ab , i*espaceX+ao , j*espaceY-radius , i*espaceX ,j*espaceY-ab] , outline='black' ,  fill='grey' , width = 2)  
+
+    def updateColors(self, canvas):
+        changeIds = []
+        changeColors = []
+        for i in range(self.width):
+            for j in range(self.height):
+                v = self.vaporMap[i][j]
+                ice = self.iceMap[i][j]
+                w = self.waterMap[i][j]/3
+                
+                
+                blue = '00'
+                red = '00'
+                green = '00'
+                
+                red= format(int(v*255) , 'x')
+                if len(red)==1:
+                    red= '0'+red
+                        
+                green= format(int(w*255) , 'x')
+                if len(green)==1:
+                    green= '0'+green  
+                        
+                blue= format(int(ice*255) , 'x')
+                if len(blue)==1:
+                    blue= '0'+blue
+                        
+                if canvas.itemcget(self.ids[i][j] , 'fill') != '#'+red+green+blue:
+                    changeIds.append(self.ids[i][j])
+                    changeColors.append('#'+red+green+blue)
         
-        
-    def forceUpdate(self , canvas):
-        if self.graphic:
-            for i in range(self.width):
-                for j in range(self.height):
-                    w = self.waterMap[i][j]
-                    v = self.vaporMap[i][j]
-                    ice = self.iceMap[i][j]
-                    
-                    blue = '00'
-                    red = '00'
-                    green = '00'
-                                   
-                    green= format(int(w*255) , 'x')
-                    if len(green)==1:
-                        green= '0'+green
-                    
-                    red= format(int(v*255) , 'x')
-                    if len(red)==1:
-                        red= '0'+red
-                            
-                    blue= format(int(ice*255) , 'x')
-                    if len(blue)==1:
-                        blue= '0'+blue
-                            
-                    canvas.itemconfig(self.ids[i][j], fill='#'+red+green+blue)
-            print("rafraichissement terminé")
+        for i in range(len(changeIds)):
+            canvas.itemconfig(changeIds[i], fill=changeColors[i])
             
     def diffusion(self):
         vap = [[0 for j in range(self.height)] for i in range(self.width)]
         #vap = [[-1]*self.height]*self.width
         #vap = copy.deepcopy(self.vaporMap)
-
         for i in range(self.width):
             for j in range(self.height):
                 vap[i][j]=0
@@ -165,45 +134,11 @@ class Tableau:
                             n+=1
                             mean+=self.vaporMap[k[0]][k[1]]
                     vap[i][j]=mean/n
-                    #vap[i][j] = self.vaporMap[i][j]
                 else:
                     vap[i][j]=self.vaporMap[i][j]
         self.vaporMap = list(vap)
-        
-    def multiDiffusion(self):
-        vap = [[0 for j in range(self.height)] for i in range(self.width)]
-        
-        start_time = time.time()
-        p = mp.Pool(processes=mp.cpu_count())
-        print('nombre de processeurs :' , mp.cpu_count())
-        
-      
-        l = [] 
-        for i in range(self.width):
-            for j in range(self.height):
-                l.append((i , j))
-        t = p.starmap(self.subDiffusion , l)
-        p.close()
-        
-        for k in t:
-            vap[k[0][0]][k[0][1]]= k[1]
-                
-        self.vaporMap = list(vap)
-        
-        print(time.time()-start_time)
-    
-    def subDiffusion(self , i , j):
-        if (i , j) not in self.listeCristal:
-            mean = self.vaporMap[i][j]
-            n = 1 # nombre d'éléments dans la moyenne
-            for k in self.neighbors[(i , j)]:
-                if k not in self.listeCristal: 
-                    n+=1
-                    mean+=self.vaporMap[k[0]][k[1]]
-            return ((i , j) , mean/n)
-        else:
-            return ((i , j) , self.vaporMap[i][j])
-        
+
+
     def gel(self):
         vap =  copy.deepcopy(self.vaporMap)
         wat = copy.deepcopy(self.waterMap)
@@ -319,34 +254,26 @@ class Tableau:
         self.listeCristal = list(crist)
         self.frontiere = list(front)
     
-    def next(self , canvas , amount=1):
+    def next(self , amount=1):
         for i in range(amount):
             if self.currentIndex == self.maxIndex:
                 self.currentIndex+=1
                 self.maxIndex+=1
                 self.generate(self.currentIndex)
-                print("step",i,'/',amount)
+                print('etape :',i,'/',amount)
                 
             else:
                 self.currentIndex+=1
-        self.changeGridTo(self.currentIndex, canvas)
+        self.changeGridTo(self.currentIndex)
         print("étape", self.currentIndex)
-
-    def previous(self , canvas , amount=1):
-        for i in range(amount):
-            if self.currentIndex !=0:
-                self.currentIndex-=1
-        self.changeGridTo(self.currentIndex, canvas)
-        print("étape",self.currentIndex)
             
         
-    def changeGridTo(self , state , canvas):
+    def changeGridTo(self , state):
         #affiche une autre grille à la place de celle actuelle
         self.waterMap = copy.deepcopy(self.states[str(state)+'wat'])
         self.vaporMap = copy.deepcopy(self.states[str(state)+'vap'])
         self.iceMap = copy.deepcopy(self.states[str(state)+'ice'])
         
-        self.updateColors(canvas)
         
     def generate(self, index):
         self.diffusion()
@@ -415,7 +342,7 @@ def export(w , h , table , fileName):
             if v>255:
                 v=255
             
-            ice = int(table.getIceMap()[i][j]*255)
+            ice = int(table.getIceMap()[i][j]*255/2)
             if ice>255:
                 ice=255
                 
@@ -423,7 +350,7 @@ def export(w , h , table , fileName):
             if wa>255:
                 wa=255
                 
-            t+=(v , ice , wa)
+            t+=(v , wa , ice)
         l.append(t)
     file = open(fileName , 'wb')
     wr.write(file , l)
@@ -435,64 +362,146 @@ def export(w , h , table , fileName):
 ''' ----Création de la fenetre---- '''
 
 if __name__=='__main__':
-    w , h = 1280 , 1100
-
-    fen = Tk()
-    can = Canvas(fen, width=w, height=h, bg='ivory') #1200 , 800
-    can.pack(side=TOP)
-
-
-    radius = 10 #30
-    dim = getHexagonesFromRadius(w, h , radius)
-    print("Tableau de dimension : ", dim[0] , dim[1])
+    repet , ecart , w , h = 1 , 50 , 100 , 100
+    fileName = "flocon"
+    vapeurInitiale = 0.9
+    alpha , beta, gamma , kappa, mu , sigma , theta = -1 , -1 , -1 , -1 , -1 , -1 , -1
     
-                                        #vap en eau, seuil 2 3 vois,  
-                                    #vapDens   seuil 3 vois,seuil 3 vois
-    #table = Tableau(dim[0] , dim[1] , 0.8 , 0.6 , 0.4 , 0.6 , 0.3 , 0 , 0 , 0.0) #width , height , vaporDensity , kappa , alpha , beta : seuil à dépasser par l'eau pour que le glac , theta , mu, gamma , sigma
-    table = Tableau(True, dim[1] , dim[1] , 0.8 , 0.52 , 0.884 , 0.7 , 0 , 0.36 , 0.32 , 0) #width , height , vaporDensity , kappa , alpha , beta : seuil à dépasser par l'eau pour que le glac , theta , mu, gamma , sigma
-
-
-    suivant = Button(text = "Suivant" , command = lambda: table.next(can), anchor = W)
-    suivant.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
-    nextWindow = can.create_window(0, 0, anchor=NW, window=suivant)
-
-    precedent = Button(text = "Precedent" , command = lambda: table.previous(can) , anchor = W)
-    precedent.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
-    prevWindow = can.create_window(0, 30, anchor=NW, window=precedent)
-
-    suivant2 = Button(text = "Suivant ++" , command = lambda: table.next(can , amount=200), anchor = W)
-    suivant2.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
-    nextWindow = can.create_window(90, 0, anchor=NW, window=suivant2)
-
-    precedent2 = Button(text = "Precedent ++" , command = lambda: table.previous(can , amount=20) , anchor = W)
-    precedent2.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
-    prevWindow = can.create_window(90, 30, anchor=NW, window=precedent2)
-
-
-    export = Button(text = "Exporter" , command = lambda: export(dim[1] , dim[1] , table , 'image.png') , anchor = W)
-    export.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
-    prevWindow = can.create_window(0, 60, anchor=NW, window=export)
+    if len(sys.argv)==2 and sys.argv[1]=='help':
+        print('Liste des parametres:')
+        print("\tecart: nombre d'étapes que l'on calcule d'un coup avant d'exporter le résultat sous forme d'image")
+        print("\trepet: nombre de répétitions d'étapes")
+        print("\tw: longueur de la grille")
+        print("\th: largeur de la grille")
+        print("\tfile: nom du fichier (sans l'extension) ou l'on exportera l'image")
+        print("\tvapeur: quantité initiale de vapeur")
+        print("\talpha: parametre")
+        print("\tbeta: parametre")
+        print("\tgamma: parametre")
+        print("\tkappa: parametre")
+        print("\tmu: parametre")
+        print("\tsigma: parametre")
+        print("\ttheta: parametre")
+        
     
-    refresh = Button(text = "Rafraichir" , command = lambda: table.forceUpdate(can) , anchor = W)
-    refresh.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
-    prevWindow = can.create_window(90, 60, anchor=NW, window=refresh)
-
-
-    table.createArray(radius , can)
-    table.updateColors(can)
-    run = True
-    while run:
-        try:
-            fen.update()
-        except:
-            run = False
+    else:
+        for arg in sys.argv:
+            if arg.startswith('ecart'):
+                try:
+                    ecart=int(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (ecart)")
             
-            try:
-                fen.destroy()
-            except:
-                pass
+            elif arg.startswith('repet'):
+                try:
+                    repet=int(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (repet)")
             
-    table.printConfig()
+            elif arg.startswith('w'):
+                try:
+                    w=int(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (w)")
+                    
+            elif arg.startswith('h'):
+                try:
+                    h=int(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (h)")
+            
+            elif arg.startswith('vapeur'):
+                try:
+                    vapeurInitiale=float(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (vapeur)")
+            
+            elif arg.startswith('alpha'):
+                try:
+                    alpha=float(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (alpha)")
+                    
+            
+            elif arg.startswith('beta'):
+                try:
+                    beta=float(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (beta)")
+            
+            elif arg.startswith('gamma'):
+                try:
+                    gamma=float(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (gamma)")
+                    
+            
+            elif arg.startswith('kappa'):
+                try:
+                    kappa=float(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (kappa)")
+            
+            elif arg.startswith('mu'):
+                try:
+                    mu=float(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (mu)")
+                    
+            
+            elif arg.startswith('sigma'):
+                try:
+                    sigma=float(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (sigma)")
+            
+            elif arg.startswith('theta'):
+                try:
+                    theta=float(arg.split('=')[1])
+                except:
+                    print("Valeur d'un parametre non précisé (theta)")
+            
+            elif arg.startswith('file'):
+                try:
+                    fileName=arg.split('=')[1]
+                except:
+                    print("Valeur d'un parametre non précisé (file)")
+                    
+        if alpha ==-1:
+            alpha=random.uniform(0 , 1)
+        
+        if beta ==-1:
+            beta=random.uniform(0 , 1)
+            
+        if gamma ==-1:
+            gamma=random.uniform(0 , 1)
 
+        if kappa ==-1:
+            kappa=random.uniform(0 , 1)
+
+        if mu ==-1:
+            mu=random.uniform(0 , 1)
+
+        if sigma ==-1:
+            sigma=random.uniform(0 , 1)
+
+        if theta ==-1:
+            theta=random.uniform(0 , 1)
+
+
+        print("Tableau de dimension :", w, h)
+        
+                                            #vap en eau, seuil 2 3 vois,  
+                                        #vapDens   seuil 3 vois,seuil 3 vois
+        #table = Tableau(dim[0] , dim[1] , 0.8 , 0.6 , 0.4 , 0.6 , 0.3 , 0 , 0 , 0.0) #width , height , vaporDensity , kappa , alpha , beta : seuil à dépasser par l'eau pour que le glace , theta , mu, gamma , sigma
+        table = Tableau(w , h , vapeurInitiale , kappa , alpha , beta , theta , mu , gamma , sigma) #width , height , vaporDensity , kappa , alpha , beta : seuil à dépasser par l'eau pour que le glace , theta , mu, gamma , sigma
+
+        x=1
+        for i in range(repet):
+            print('boucle numéro',x) 
+            table.next(amount=ecart)
+            export(w , h , table , fileName+str(i+1)+'.png')
+            x+=1
+            
 
 
