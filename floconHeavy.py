@@ -1,4 +1,12 @@
-from tkinter import *
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+try:
+    # for Python2
+    from Tkinter import *
+except ImportError:
+    # for Python3
+    from tkinter import *
 from math import sqrt , ceil
 import random
 import algo_voisins_hexa
@@ -11,11 +19,28 @@ import time
 class Tableau:
     
     def __init__(self, graphic , width , height , vaporDensity , kappa , alpha , beta , theta , mu, gamma , sigma):
+        '''
+        Constructeur de la classe Taleau
+        :param graphic: (bool) Si True, le programme affichera les cases (plus long car demande plus de ressources) sinon non (plus rapide mais pas d'affichage)
+        :param width: (int) nombre de cases selon l'horizontale
+        :param height: (int) nombre de cases selon la verticale
+        :param vaporDensity: (float) densité de vapeur initiale dans chaque case
+        :param alpha: (float) constante influençant le processus d'attachement
+        :param beta: (float) constante influençant le processus d'attachement
+        :param gamma: (float) constante influençant le processus de fonte
+        :param kappa: (float) constante influençant le processus de gel
+        :param mu: (float) constante influençant le processus de fonte
+        :param theta: (float) constante influençant le processus d'attachement
+        :param sigma: (float) constante influençant le processus de bruit (non implémenté)
+        :return: None
+        
+        CU: width, height, vaporDensity, kappa, alpha, beta, theta, mu, gamma, sigma > 0 et vaporDensity , kappa , alpha , beta , theta , mu, gamma , sigma compris entre 0 et 1
+        '''
         self.listeCristal = []
         self.graphic = graphic
-        self.frontiere = []
+        self.frontiere = [] #liste des cristaux appartenant à la frontiere
         self.vaporDensity = vaporDensity #densité de vapeur initiale
-        self.amount = height*width
+        self.amount = height*width #nombre total de cases
         self.kappa = kappa #quantité de vapeur qui se transforme en glace durant le gel
         self.alpha = alpha # seuil à dépasser par l'eau pour qu'une case avec 3 voisins cristaux se transforme en cristal
         self.beta = beta # pareil mais pour 1 ou 2 voisins cristaux seulement
@@ -25,15 +50,16 @@ class Tableau:
         self.sigma = sigma #bruit
         self.width = width
         self.height = height
-        self.ids = []
+        self.ids = [] #liste des ids des polygones que l'on affiche
         self.vaporMap = []
         self.waterMap = []
         self.iceMap = []
         self.currentIndex = 0 #index correspond à l'étape que l'on affiche à l'écran
-        self.maxIndex = 0 #index maximumactuellement généré
-        self.states = {}
+        self.maxIndex = 0 #index maximum actuellement généré
+        self.states = {} #dictionnaire regroupant l'ensemble des grilles vaporMap, iceMap et Watermap de chaque étape pour permettre d'afficher à l'écran une étape antérieure
+                         #sans avoir besoin de la recalculer
         
-        self.neighbors = {}
+        self.neighbors = {} #dictionnaire regroupant l'ensemble des voisins de chaque case
         for i in range(width):
             for j in range(height):
                 self.neighbors[(i , j)]=algo_voisins_hexa.voisins_grille_hexa([[0 for i in range(width)] for j in range(height)] , (j , i))  
@@ -67,7 +93,8 @@ class Tableau:
         Créer un tableau hexagonal de dimension (x,y)
         :param radius: (int) rayon de l'hexagone (longueur centre - sommet)
         :param canvas: (tkinter.Canvas) canvas sur lequel on affiche les cases
-    
+        :return: None
+        
         CU: x et y > 0
     
         '''
@@ -86,7 +113,15 @@ class Tableau:
                     else: # si i est impair
                         self.ids[i][j]=canvas.create_polygon([i*espaceX, j*espaceY+ab , i*espaceX+ao , j*espaceY+radius , i*espaceX+2*ao , j*espaceY+ab , i*espaceX+2*ao , j*espaceY-ab , i*espaceX+ao , j*espaceY-radius , i*espaceX ,j*espaceY-ab] , outline='black' ,  fill='grey' , width = 2)  
     
+    
     def updateColors(self, canvas):
+        '''
+        met à jour les polygones à l'écran (rafraichit leur couleur uniquement si l'état de leur case associée a changé)
+        :param canvas: (tkinter.Canvas) canvas sur lequel on affiche les cases
+        :return: None
+        
+        CU: aucune
+        '''
         if self.graphic:
             changeIds = []
             changeColors = []
@@ -122,6 +157,14 @@ class Tableau:
         
         
     def forceUpdate(self , canvas):
+        '''
+        met à jour les polygones à l'écran (rafraichit leur couleur qu'importe si l'état de leur case associée a changé ou non)
+        :param canvas: (tkinter.Canvas) canvas sur lequel on affiche les cases
+        
+        :return: None
+        
+        CU: aucune
+        '''
         if self.graphic:
             for i in range(self.width):
                 for j in range(self.height):
@@ -149,9 +192,14 @@ class Tableau:
             print("rafraichissement terminé")
             
     def diffusion(self):
+        '''
+        Le processus de diffusion consiste à égaliser la vapeur entre les cases qui ne font pas partie du cristal
+        Cet algorithme modifie les valeurs de la liste vaporMap
+        
+        :return: None
+        '''
+        
         vap = [[0 for j in range(self.height)] for i in range(self.width)]
-        #vap = [[-1]*self.height]*self.width
-        #vap = copy.deepcopy(self.vaporMap)
 
         for i in range(self.width):
             for j in range(self.height):
@@ -165,46 +213,17 @@ class Tableau:
                             n+=1
                             mean+=self.vaporMap[k[0]][k[1]]
                     vap[i][j]=mean/n
-                    #vap[i][j] = self.vaporMap[i][j]
                 else:
                     vap[i][j]=self.vaporMap[i][j]
         self.vaporMap = list(vap)
         
-    def multiDiffusion(self):
-        vap = [[0 for j in range(self.height)] for i in range(self.width)]
-        
-        start_time = time.time()
-        p = mp.Pool(processes=mp.cpu_count())
-        print('nombre de processeurs :' , mp.cpu_count())
-        
-      
-        l = [] 
-        for i in range(self.width):
-            for j in range(self.height):
-                l.append((i , j))
-        t = p.starmap(self.subDiffusion , l)
-        p.close()
-        
-        for k in t:
-            vap[k[0][0]][k[0][1]]= k[1]
-                
-        self.vaporMap = list(vap)
-        
-        print(time.time()-start_time)
-    
-    def subDiffusion(self , i , j):
-        if (i , j) not in self.listeCristal:
-            mean = self.vaporMap[i][j]
-            n = 1 # nombre d'éléments dans la moyenne
-            for k in self.neighbors[(i , j)]:
-                if k not in self.listeCristal: 
-                    n+=1
-                    mean+=self.vaporMap[k[0]][k[1]]
-            return ((i , j) , mean/n)
-        else:
-            return ((i , j) , self.vaporMap[i][j])
-        
     def gel(self):
+        '''
+        Le processus de gel consiste à transformer une certaine proportion de vapeur en eau et en glace pour chaque case
+        Cet algorithme modifie les valeurs des listes vaporMap, iceMap et waterMap
+        
+        :return: None
+        '''
         vap =  copy.deepcopy(self.vaporMap)
         wat = copy.deepcopy(self.waterMap)
         ice = copy.deepcopy(self.iceMap)
@@ -228,6 +247,12 @@ class Tableau:
         
         
     def fonte(self):
+        '''
+        Le processus de fonte consiste à transformer une certaine proportion d'eau et de glace en vapeur pour chaque case
+        Cet algorithme modifie les valeurs des listes vaporMap, iceMap et waterMap
+        
+        :return: None
+        '''
         vap = copy.deepcopy(self.vaporMap)
         wat = copy.deepcopy(self.waterMap)
         ice = copy.deepcopy(self.iceMap)
@@ -247,6 +272,12 @@ class Tableau:
         self.waterMap= copy.deepcopy(wat)
         
     def attachement(self):
+        '''
+        Le processus d'attachement consiste à ajouter certaines cases de la frontière au cristal
+        Cet algorithme modifie les valeurs des listes vaporMap, iceMap, waterMap, listeCristal et frontiere
+        
+        :return: None
+        '''
         vap = copy.deepcopy(self.vaporMap)
         wat = copy.deepcopy(self.waterMap)
         ice = copy.deepcopy(self.iceMap)
@@ -320,6 +351,13 @@ class Tableau:
         self.frontiere = list(front)
     
     def next(self , canvas , amount=1):
+        '''
+        affiche (et eventuellement calcul) la grille à l'état suivant
+        :param canvas: (tkinter.Canvas) canvas sur lequel on affiche les cases
+        :return: None
+        
+        CU: aucune
+        '''
         for i in range(amount):
             if self.currentIndex == self.maxIndex:
                 self.currentIndex+=1
@@ -333,6 +371,13 @@ class Tableau:
         print("étape", self.currentIndex)
 
     def previous(self , canvas , amount=1):
+        '''
+        affiche (et eventuellement calcul) la grille à l'état précédent
+        :param canvas: (tkinter.Canvas) canvas sur lequel on affiche les cases
+        :return: None
+        
+        CU: aucune
+        '''
         for i in range(amount):
             if self.currentIndex !=0:
                 self.currentIndex-=1
@@ -341,7 +386,14 @@ class Tableau:
             
         
     def changeGridTo(self , state , canvas):
-        #affiche une autre grille à la place de celle actuelle
+        '''
+        remplace les listes waterMap, vaporMap et iceMap par la version donnée par le dictionnaire states
+        :param state: (int) état auquel on souhaite afficher la grille
+        :param canvas: (tkinter.Canvas) canvas sur lequel on affiche les cases
+        :return: None
+        
+        CU: aucune
+        '''
         self.waterMap = copy.deepcopy(self.states[str(state)+'wat'])
         self.vaporMap = copy.deepcopy(self.states[str(state)+'vap'])
         self.iceMap = copy.deepcopy(self.states[str(state)+'ice'])
@@ -349,6 +401,13 @@ class Tableau:
         self.updateColors(canvas)
         
     def generate(self, index):
+        '''
+        lance le processus de diffusion, gel, attachement et fonte
+        :param index: (int) index de l'état que l'on s'apprete à calculer
+        return: None
+        
+        CU: aucune
+        '''
         self.diffusion()
         self.gel()
         self.attachement()
@@ -358,8 +417,22 @@ class Tableau:
         self.states[str(index)+'vap']=copy.deepcopy(self.vaporMap)
         self.states[str(index)+'ice']=copy.deepcopy(self.iceMap)
         
-        #bruit()
         
+    def printConfig(self):
+        '''
+        affiche les paramètres initiaux utilisés lors de la génération du flocon
+        :return: None
+        '''
+        print('alpha' , self.alpha)
+        print('beta ' , self.beta)
+        print('gamma' , self.gamma)
+        print('kappa' , self.kappa)
+        print('mu   ' , self.mu)
+        print('sigma' , self.sigma)
+        print('theta' , self.theta)
+
+    #------Getters------    
+    
     def getIds(self):
         return self.ids
     
@@ -371,15 +444,6 @@ class Tableau:
     
     def getIceMap(self):
         return self.iceMap
-    
-    def printConfig(self):
-        print('alpha' , self.alpha)
-        print('beta ' , self.beta)
-        print('gamma' , self.gamma)
-        print('kappa' , self.kappa)
-        print('mu   ' , self.mu)
-        print('sigma' , self.sigma)
-        print('theta' , self.theta)
 
     def getIndex(self):
         return self.currentIndex
@@ -405,6 +469,16 @@ def getHexagonesFromRadius(x , y , radius):
 
 
 def export(w , h , table , fileName):
+    '''
+    exporte la grille formant le flocon sous forme de fichier .png
+    :param w: (int) longueur de l'image
+    :param h: (int) largeur de l'image
+    :param table: (__main__.Tableau) tableau contenant les listes  à exporter
+    :param fileName: (str) nom du fichier à créer
+    :return: None
+    
+    CU: fileName doit être un nom de fichier valide
+    '''
     wr = png.Writer(w, h)
     l=[]
     
@@ -436,21 +510,16 @@ def export(w , h , table , fileName):
 
 if __name__=='__main__':
     w , h = 1280 , 1100
-
+    
     fen = Tk()
     can = Canvas(fen, width=w, height=h, bg='ivory') #1200 , 800
     can.pack(side=TOP)
 
 
-    radius = 10 #30
+    radius = 10
     dim = getHexagonesFromRadius(w, h , radius)
-    print("Tableau de dimension : ", dim[0] , dim[1])
     
-                                        #vap en eau, seuil 2 3 vois,  
-                                    #vapDens   seuil 3 vois,seuil 3 vois
-    #table = Tableau(dim[0] , dim[1] , 0.8 , 0.6 , 0.4 , 0.6 , 0.3 , 0 , 0 , 0.0) #width , height , vaporDensity , kappa , alpha , beta : seuil à dépasser par l'eau pour que le glac , theta , mu, gamma , sigma
-    table = Tableau(True, dim[1] , dim[1] , 0.8 , 0.52 , 0.884 , 0.7 , 0 , 0.36 , 0.32 , 0) #width , height , vaporDensity , kappa , alpha , beta : seuil à dépasser par l'eau pour que le glac , theta , mu, gamma , sigma
-
+    table = Tableau(True, dim[1] , dim[1] , 0.8 , 0.52 , 0.884 , 0.7 , 0 , 0.36 , 0.32 , 0)
 
     suivant = Button(text = "Suivant" , command = lambda: table.next(can), anchor = W)
     suivant.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
@@ -460,7 +529,7 @@ if __name__=='__main__':
     precedent.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
     prevWindow = can.create_window(0, 30, anchor=NW, window=precedent)
 
-    suivant2 = Button(text = "Suivant ++" , command = lambda: table.next(can , amount=200), anchor = W)
+    suivant2 = Button(text = "Suivant ++" , command = lambda: table.next(can , amount=20), anchor = W)
     suivant2.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
     nextWindow = can.create_window(90, 0, anchor=NW, window=suivant2)
 
