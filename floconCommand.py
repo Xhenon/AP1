@@ -1,4 +1,6 @@
-from tkinter import *
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from math import sqrt , ceil
 import random
 import algo_voisins_hexa
@@ -12,6 +14,23 @@ import sys
 class Tableau:
     
     def __init__(self , width , height , vaporDensity , kappa , alpha , beta , theta , mu, gamma , sigma):
+        '''
+        Constructeur de la classe Taleau
+        :param width: (int) nombre de cases selon l'horizontale
+        :param height: (int) nombre de cases selon la verticale
+        :param vaporDensity: (float) densité de vapeur initiale dans chaque case
+        :param alpha: (float) constante influençant le processus d'attachement
+        :param beta: (float) constante influençant le processus d'attachement
+        :param gamma: (float) constante influençant le processus de fonte
+        :param kappa: (float) constante influençant le processus de gel
+        :param mu: (float) constante influençant le processus de fonte
+        :param theta: (float) constante influençant le processus d'attachement
+        :param sigma: (float) constante influençant le processus de bruit (non implémenté)
+        :return: None
+        
+        CU: width, height, vaporDensity, kappa, alpha, beta, theta, mu, gamma, sigma > 0 et vaporDensity , kappa , alpha , beta , theta , mu, gamma , sigma compris entre 0 et 1
+        '''
+        
         self.listeCristal = []
         self.frontiere = []
         self.vaporDensity = vaporDensity #densité de vapeur initiale
@@ -62,66 +81,15 @@ class Tableau:
         self.states['0ice']=list(self.iceMap)
     
     
-    def createArray(self, radius , canvas):
-        '''
-        Créer un tableau hexagonal de dimension (x,y)
-        :param radius: (int) rayon de l'hexagone (longueur centre - sommet)
-        :param canvas: (tkinter.Canvas) canvas sur lequel on affiche les cases
-    
-        CU: x et y > 0
-    
-        '''
-        xOffset = 0
-        ab = radius/2
-        ao = sqrt(radius*radius- ab*ab)
-        espaceX = ao*2
-        espaceY= radius+ab
-        vapeur = 1.0
-        for j in range(self.height):
-            for i in range(self.width):
-                if j%2==0: #si i est pair
-                    self.ids[i][j]=canvas.create_polygon([i*espaceX-ao, j*espaceY+ab , i*espaceX , j*espaceY+radius , i*espaceX+ao , j*espaceY+ab , i*espaceX+ao , j*espaceY-ab , i*espaceX , j*espaceY-radius , i*espaceX-ao ,j*espaceY-ab] , outline='black' ,  fill='grey' , width = 2)
-            
-                else: # si i est impair
-                    self.ids[i][j]=canvas.create_polygon([i*espaceX, j*espaceY+ab , i*espaceX+ao , j*espaceY+radius , i*espaceX+2*ao , j*espaceY+ab , i*espaceX+2*ao , j*espaceY-ab , i*espaceX+ao , j*espaceY-radius , i*espaceX ,j*espaceY-ab] , outline='black' ,  fill='grey' , width = 2)  
-
-    def updateColors(self, canvas):
-        changeIds = []
-        changeColors = []
-        for i in range(self.width):
-            for j in range(self.height):
-                v = self.vaporMap[i][j]
-                ice = self.iceMap[i][j]
-                w = self.waterMap[i][j]/3
-                
-                
-                blue = '00'
-                red = '00'
-                green = '00'
-                
-                red= format(int(v*255) , 'x')
-                if len(red)==1:
-                    red= '0'+red
-                        
-                green= format(int(w*255) , 'x')
-                if len(green)==1:
-                    green= '0'+green  
-                        
-                blue= format(int(ice*255) , 'x')
-                if len(blue)==1:
-                    blue= '0'+blue
-                        
-                if canvas.itemcget(self.ids[i][j] , 'fill') != '#'+red+green+blue:
-                    changeIds.append(self.ids[i][j])
-                    changeColors.append('#'+red+green+blue)
-        
-        for i in range(len(changeIds)):
-            canvas.itemconfig(changeIds[i], fill=changeColors[i])
-            
     def diffusion(self):
+        '''
+        Le processus de diffusion consiste à égaliser la vapeur entre les cases qui ne font pas partie du cristal
+        Cet algorithme modifie les valeurs de la liste vaporMap
+        
+        :return: None
+        '''
+        
         vap = [[0 for j in range(self.height)] for i in range(self.width)]
-        #vap = [[-1]*self.height]*self.width
-        #vap = copy.deepcopy(self.vaporMap)
         for i in range(self.width):
             for j in range(self.height):
                 vap[i][j]=0
@@ -140,6 +108,12 @@ class Tableau:
 
 
     def gel(self):
+        '''
+        Le processus de gel consiste à transformer une certaine proportion de vapeur en eau et en glace pour chaque case
+        Cet algorithme modifie les valeurs des listes vaporMap, iceMap et waterMap
+        
+        :return: None
+        '''
         vap =  copy.deepcopy(self.vaporMap)
         wat = copy.deepcopy(self.waterMap)
         ice = copy.deepcopy(self.iceMap)
@@ -163,6 +137,12 @@ class Tableau:
         
         
     def fonte(self):
+        '''
+        Le processus de fonte consiste à transformer une certaine proportion d'eau et de glace en vapeur pour chaque case
+        Cet algorithme modifie les valeurs des listes vaporMap, iceMap et waterMap
+        
+        :return: None
+        '''
         vap = copy.deepcopy(self.vaporMap)
         wat = copy.deepcopy(self.waterMap)
         ice = copy.deepcopy(self.iceMap)
@@ -182,6 +162,12 @@ class Tableau:
         self.waterMap= copy.deepcopy(wat)
         
     def attachement(self):
+        '''
+        Le processus d'attachement consiste à ajouter certaines cases de la frontière au cristal
+        Cet algorithme modifie les valeurs des listes vaporMap, iceMap, waterMap, listeCristal et frontiere
+        
+        :return: None
+        '''
         vap = copy.deepcopy(self.vaporMap)
         wat = copy.deepcopy(self.waterMap)
         ice = copy.deepcopy(self.iceMap)
@@ -255,6 +241,12 @@ class Tableau:
         self.frontiere = list(front)
     
     def next(self , amount=1):
+        '''
+        affiche (et eventuellement calcul) la grille à l'état suivant
+        :return: None
+        
+        CU: aucune
+        '''
         for i in range(amount):
             if self.currentIndex == self.maxIndex:
                 self.currentIndex+=1
@@ -269,13 +261,26 @@ class Tableau:
             
         
     def changeGridTo(self , state):
-        #affiche une autre grille à la place de celle actuelle
+        '''
+        remplace les listes waterMap, vaporMap et iceMap par la version donnée par le dictionnaire states
+        :param state: (int) état auquel on souhaite afficher la grille
+        :return: None
+        
+        CU: aucune
+        '''
         self.waterMap = copy.deepcopy(self.states[str(state)+'wat'])
         self.vaporMap = copy.deepcopy(self.states[str(state)+'vap'])
         self.iceMap = copy.deepcopy(self.states[str(state)+'ice'])
         
         
     def generate(self, index):
+        '''
+        lance le processus de diffusion, gel, attachement et fonte
+        :param index: (int) index de l'état que l'on s'apprete à calculer
+        return: None
+        
+        CU: aucune
+        '''
         self.diffusion()
         self.gel()
         self.attachement()
@@ -285,7 +290,7 @@ class Tableau:
         self.states[str(index)+'vap']=copy.deepcopy(self.vaporMap)
         self.states[str(index)+'ice']=copy.deepcopy(self.iceMap)
         
-        #bruit()
+    #------Getters------ 
         
     def getIds(self):
         return self.ids
@@ -299,15 +304,6 @@ class Tableau:
     def getIceMap(self):
         return self.iceMap
     
-    def printConfig(self):
-        print('alpha' , self.alpha)
-        print('beta ' , self.beta)
-        print('gamma' , self.gamma)
-        print('kappa' , self.kappa)
-        print('mu   ' , self.mu)
-        print('sigma' , self.sigma)
-        print('theta' , self.theta)
-
     def getIndex(self):
         return self.currentIndex
 
@@ -332,6 +328,16 @@ def getHexagonesFromRadius(x , y , radius):
 
 
 def export(w , h , table , fileName):
+    '''
+    exporte la grille formant le flocon sous forme de fichier .png
+    :param w: (int) longueur de l'image
+    :param h: (int) largeur de l'image
+    :param table: (__main__.Tableau) tableau contenant les listes  à exporter
+    :param fileName: (str) nom du fichier à créer
+    :return: None
+    
+    CU: fileName doit être un nom de fichier valide
+    '''
     wr = png.Writer(w, h)
     l=[]
     
@@ -468,10 +474,10 @@ if __name__=='__main__':
                     print("Valeur d'un parametre non précisé (file)")
                     
         if alpha ==-1:
-            alpha=random.uniform(0 , 1)
+            alpha=random.uniform(0.5 , 1)
         
         if beta ==-1:
-            beta=random.uniform(0 , 1)
+            beta=random.uniform(0.4 , 1)
             
         if gamma ==-1:
             gamma=random.uniform(0 , 1)
@@ -490,17 +496,13 @@ if __name__=='__main__':
 
 
         print("Tableau de dimension :", w, h)
-        
-                                            #vap en eau, seuil 2 3 vois,  
-                                        #vapDens   seuil 3 vois,seuil 3 vois
-        #table = Tableau(dim[0] , dim[1] , 0.8 , 0.6 , 0.4 , 0.6 , 0.3 , 0 , 0 , 0.0) #width , height , vaporDensity , kappa , alpha , beta : seuil à dépasser par l'eau pour que le glace , theta , mu, gamma , sigma
-        table = Tableau(w , h , vapeurInitiale , kappa , alpha , beta , theta , mu , gamma , sigma) #width , height , vaporDensity , kappa , alpha , beta : seuil à dépasser par l'eau pour que le glace , theta , mu, gamma , sigma
+        table = Tableau(w , h , vapeurInitiale , kappa , alpha , beta , theta , mu , gamma , sigma)
 
         x=1
         for i in range(repet):
             print('boucle numéro',x) 
             table.next(amount=ecart)
-            export(w , h , table , fileName+str(i+1)+'.png')
+            export(w , h , table , fileName+'-'+str(i+1)+'.png')
             x+=1
             
 

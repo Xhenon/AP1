@@ -1,5 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import sys
 import random
+
+'''
+sert à générer un fichier texte contenant des valeurs aléatoires pour les constantes alpha, beta, gamma ...
+(s'exécute uniquement en terminal de commande)
+'''
 
 if __name__=='__main__':
     width = '100'
@@ -10,6 +17,7 @@ if __name__=='__main__':
     name = 'default.txt'
     arg = sys.argv
     continu =True
+    
     if len(arg)>1:
         if arg[1]=='help':
             print("parametres:")
@@ -63,7 +71,7 @@ if __name__=='__main__':
     if continu:
         f = open(name+'.txt' , 'w')
         for i in range(int(amount)):
-            f.write('w='+width + ' h='+height + ' alpha='+ str(random.uniform(0 , 1)) + ' beta='+str(random.uniform(0 , 1)) + ' gamma='+ str(random.uniform(0 , 1)) + ' kappa='+ str(random.uniform(0 , 1)) + \
+            f.write('w='+width + ' h='+height + ' alpha='+ str(random.uniform(0.4 , 1)) + ' beta='+str(random.uniform(0.2 , 1)) + ' gamma='+ str(random.uniform(0 , 1)) + ' kappa='+ str(random.uniform(0 , 1)) + \
                     ' mu='+ str(random.uniform(0 , 1)) + ' sigma='+ str(random.uniform(0 , 1)) + ' theta='+ str(random.uniform(0 , 1)) + ' repet='+loop + ' file='+name+str(i)+ ' ecart='+ecart+'\n')
         f.close
                 

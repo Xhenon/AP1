@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 def voisins_grille_hexa(grille,coord):
     """
         Renvoie la liste ordonnée des voisins de la cellule de coordonées coord dans une grille hexagonale.
@@ -7,15 +10,8 @@ def voisins_grille_hexa(grille,coord):
         
         CU :
         - les valeurs de coord doivent être positives ou nulles
-        - la celulle doit se trouver dans la grille
+        - la cellule doit se trouver dans la grille
         
-        Exemples :
-        >>> voisins_grille_hexa(generation_grille(4,5,0),(1,1))
-        [(0, 1), (0, 2), (1, 0), (1, 2), (2, 1), (2, 2)]
-        >>> voisins_grille_hexa(generation_grille(4,5,0),(0,0))
-        [(0, 1), (1, 0)]
-        >>> voisins_grille_hexa(generation_grille(3,5,0),(2,0))
-        [(1, 0), (2, 1)]
     """
     voisins = []
     if coord[0] < 0 :
@@ -66,30 +62,3 @@ def voisins_grille_hexa(grille,coord):
         voisins[i]= (voisins[i][1] , voisins[i][0]) 
         
     return sorted(voisins)
-
-def etat_cellule(grille,coord):
-    """
-        Renvoie le contenu de la cellule dont les coordonées sont passées en paramètre.
-        :param grille: (list)
-        :param coord: (tuple)
-        :return: (any)
-        
-        CU : les coordonéees doivent correspondre à une cellule de la grille
-        
-        Exemple :
-        >>> etat_cellule(generation_grille(4,5,0),(1,1))
-        0
-        >>> etat_cellule([[0,0],[0,5],[0,0]],(1,1))
-        5
-        >>> etat_cellule(generation_grille(4,5,0),(5,1))
-        Cellule invalide.
-    """
-    try :
-        return grille[coord[0]][coord[1]]
-    except IndexError:
-        print("Cellule invalide.")
-        
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS,verbose=True)
